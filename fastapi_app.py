@@ -1,4 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from typing import List, Dict
+
 import uvicorn
 import shutil
 import os
@@ -7,16 +9,21 @@ from pathlib import Path
 from agents.format_detection_agent import FormatDetectionAgent
 from agents.conversion_agent import ConversionAgent
 from agents.pdf_loader_agent import PDFLoaderAgent
+from agents.ocr_agent import OCRAgent
+from agents.ocr_merge_agent import OCRMergeAgent
 
 app = FastAPI(
     title="Indexing Pipeline API",
-    description="API for preparing documents for indexing, including format detection and conversion.",
+    description="API for preparing documents for indexing, including format detection, conversion, OCR, and merging.",
     version="1.0.0"
 )
 
 # Initialize agents
 format_agent = FormatDetectionAgent()
 conversion_agent = ConversionAgent()
+ocr_agent = OCRAgent()
+merge_agent = OCRMergeAgent()
+
 
 # Helper to get the system Downloads folder
 def get_downloads_folder():
@@ -91,7 +98,40 @@ async def load_pdf(file_path: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/ocr")
+async def run_ocr(file: UploadFile = File(...)):
+    """
+    Endpoint to run parallel OCR on all pages of an uploaded PDF file. 
+    Returns a sorted list of page results.
+    """
+    # Use a temporary directory for the uploaded file to avoid saving in project folder
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir) / file.filename
+        
+        try:
+            # Save uploaded file to temp location
+            with open(temp_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # Run parallel OCR on all pages
+            result = ocr_agent.run_ocr(str(temp_path))
+            return result
+                     
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/merge-ocr")
+async def merge_ocr_results(ocr_results: List[Dict]):
+    """
+    Endpoint to merge EasyOCR and Tesseract results using LLM.
+    Input: List of objects containing page, easyocr_text, and tesseract_text.
+    """
+    try:
+        results = merge_agent.merge_results(ocr_results)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
-
-
