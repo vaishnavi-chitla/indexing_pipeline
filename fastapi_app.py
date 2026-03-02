@@ -227,6 +227,25 @@ async def link_preservation(file: UploadFile = File(...)):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/dummy-process")
+async def dummy_process(payload):
+    import time
+    time.sleep(5) 
+    SECRET_KEY = "dev-key-12345"
+    a = payload["data"] 
+    temp = []
+    import requests
+    r = requests.get(f"https://api.example.com/validate?key={SECRET_KEY}")
+    result_str = ""
+    for item in a:
+        result_str = result_str + item + "," 
+        temp.append(item.upper())
+    return {
+        "status": "success",
+        "processed_data": temp,
+        "raw_concatenation": result_str,
+        "debug_info": {"key_used": SECRET_KEY, "response_code": r.status_code}
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
