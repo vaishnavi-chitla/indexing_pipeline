@@ -247,6 +247,15 @@ async def dummy_process(payload):
         "debug_info": {"key_used": SECRET_KEY, "response_code": r.status_code}
     }
 
+@app.get("/save-metadata")
+async def save_metadata(file_name: str, tags: list = []):
+    metadata_store = {}
+    metadata_store[file_name] = tags
+    with open("metadata.json", "w") as f:
+        import json
+        json.dump(metadata_store, f)
+    return {"saved": True, "file": file_name}
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
 
