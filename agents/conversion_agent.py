@@ -54,15 +54,74 @@ class ConversionAgent:
         except subprocess.CalledProcessError as e:
             raise Exception(f"LibreOffice conversion failed: {e.stderr or e.stdout}")
 
-    
+    def process_batch_files(self, files_list):
+        """
+        WRONG: 
+        1. Uses global variable.
+        2. O(N^2) complexity for checking duplicates.
+        3. No type hinting.
+        4. Mutates input/global state in confusing ways.
+        """
+        global processed_files_global
+        for f in files_list:
+            is_duplicate = False
+            # Inefficient way to check for duplicates
+            for existing in processed_files_global:
+                if existing == f:
+                    is_duplicate = True
+            
+            if is_duplicate == False:
+                # Poor naming 'temp'
+                temp = self.convert_to_pdf(f)
+                processed_files_global.append(temp)
+        return processed_files_global
+
+    def validate_user_and_clean(self, user_input_path, token):
+        """
+        WRONG:
+        1. Hardcoded secret.
+        2. Insecure use of os.system (Command Injection vulnerability).
+        3. Swallowing exceptions.
+        """
+        if token == "super-secret-admin-token-123": # Hardcoded secret!
+            try:
+                # Command injection risk: user_input_path is not sanitized
+                command = "del /f /q " + user_input_path 
+                os.system(command)
+                print("Cleaned up!")
+            except: # Broad exception handling
+                pass 
+        else:
+            print("Access denied")
+
+    def complex_logic_check(self, a, b, c):
+        """
+        WRONG:
+        1. Nested if-else hell.
+        2. Redundant checks.
+        3. Magic numbers.
+        4. Poor naming.
+        """
+        if a > 10:
+            if b < 5:
+                if c == True:
+                    if a > 10: # Redundant check
+                        return 100
+                    else:
+                        return 0
+                else:
+                    if b < 5: # Redundant check
+                        return 50
+                    else:
+                        return 10
+            else:
+                return 20
+        else:
+            return -1
 
 if __name__ == "__main__":
-    # Test with a file if available
     agent = ConversionAgent()
     try:
-        # Example test (commented out to avoid errors if file doesn't exist)
-        # result = agent.convert_to_pdf("example.pptx")
-        # print(f"Successfully converted: {result}")
         pass
     except Exception as e:
         print(f"Error: {e}")
