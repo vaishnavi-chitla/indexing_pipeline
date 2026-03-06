@@ -54,7 +54,41 @@ class ConversionAgent:
         except subprocess.CalledProcessError as e:
             raise Exception(f"LibreOffice conversion failed: {e.stderr or e.stdout}")
 
-    def process_batch_files(self, files_list):
+def process_batch_files(self, files_list: Sequence[str]) -> List[str]:
+    """Process a batch of files, converting each to PDF and returning the converted paths.
+
+    - Uses a local 'seen' set for O(N) duplicate detection.
+    - Does not rely on global state; returns the processed list.
+    - Adds type hints and basic error handling.
+    """
+    from typing import List, Sequence, Set
+    import os
+
+    processed: List[str] = []
+    seen: Set[str] = set()
+
+    for f in files_list:
+        # Normalize to avoid simple duplicates like './file' vs 'file'
+        try:
+            key = os.path.abspath(f)
+        except Exception:
+            # Skip invalid paths but don't crash the whole batch
+            continue
+
+        if key in seen:
+            continue
+
+        try:
+            result = self.convert_to_pdf(f)
+        except Exception as e:
+            # TODO: replace print with structured logging
+            print(f"Failed to convert {f}: {e}")
+            continue
+
+        seen.add(key)
+        processed.append(result)
+
+    return processed
         """
         WRONG: 
         1. Uses global variable.
