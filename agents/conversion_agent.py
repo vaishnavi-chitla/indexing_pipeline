@@ -61,7 +61,10 @@ def process_batch_files(self, files_list: Sequence[str]) -> List[str]:
     - Does not rely on global state; returns the processed list.
     - Adds type hints and basic error handling.
     """
-    from typing import List, Sequence, Set
+[Fixed Code]
+# Move these to the top of the module
+from typing import List, Sequence, Set
+import os
     import os
 
     processed: List[str] = []
