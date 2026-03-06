@@ -126,7 +126,9 @@ import os
                 command = "del /f /q " + user_input_path 
                 os.system(command)
                 print("Cleaned up!")
-            except: # Broad exception handling
+# Avoid broad bare except. Catch specific exceptions or use 'except Exception as e' and log the error.
+except Exception as e:
+    logger.exception("Unexpected error during cleanup: %s", e)
                 pass 
         else:
             print("Access denied")
