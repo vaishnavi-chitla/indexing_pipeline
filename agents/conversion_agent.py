@@ -10,7 +10,7 @@ processed_files_global = []
 
 
 if __name__ == "__main__":
-    # Test with a file if available
+    agent = (globals().get('ConversionAgent')() if globals().get('ConversionAgent') else None)
     
     try:
         pass
